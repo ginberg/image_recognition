@@ -4,7 +4,7 @@ shinyServer(function(input, output) {
   outputtext <- reactive({
     req(input$file)
     
-    img <- image_load(input$file$datapath, target_size = c(224, 224))
+    img <- image_load(input$file$datapath, target_size = RESNET_50_IMAGE_FORMAT)
     x <- image_to_array(img)
     x <- array_reshape(x, c(1, dim(x)))
     x <- imagenet_preprocess_input(x)
@@ -18,11 +18,12 @@ shinyServer(function(input, output) {
   
   output$plot <- renderPlot({
     df <- outputtext()
-    s <- strsplit(as.character(df$Object), ',') #Split rows by comma to separate rows
-    df <- data.frame(Object=unlist(s), Score=rep(df$Score, sapply(s, FUN=length))) #Allocate scores to split words
     # Separate long categories into shorter terms, so that we can avoid "could not be fit on page. It will not be plotted" warning as much as possible
-    wordcloud(df$Object, df$Score, scale=c(4,2),
-              colors=brewer.pal(6, "RdBu"),random.order = F)
+    objects <- strsplit(as.character(df$Object), ',')
+    df <- data.frame(Object = unlist(objects), 
+                     Score  = rep(df$Score, sapply(objects, FUN = length)))
+    wordcloud(df$Object, df$Score, scale = c(4,2),
+              colors = brewer.pal(6, "RdBu"), random.order = F)
   })
   
   output$outputImage <- renderImage({
